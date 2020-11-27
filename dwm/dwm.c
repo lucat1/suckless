@@ -173,7 +173,7 @@ static int applysizehints(Client *c, int *x, int *y, int *w, int *h,
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
 static void attach(Client *c);
-static void attachabove(Client *c);
+static void attachbelow(Client *c);
 static void attachstack(Client *c);
 static void buttonpress(XEvent *e);
 static void checkotherwm(void);
@@ -213,7 +213,7 @@ static void movemouse(const Arg *arg);
 static Client *nexttiled(Client *c);
 /* static void pop(Client *); */
 static void propertynotify(XEvent *e);
-static void quit(const Arg *arg);
+/* static void quit(const Arg *arg); */
 static Monitor *recttomon(int x, int y, int w, int h);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
@@ -427,23 +427,23 @@ void attach(Client *c) {
   c->mon->clients = c;
 }
 
-void attachabove(Client *c) {
-  if (c->mon->sel == NULL || c->mon->sel == c->mon->clients ||
-      c->mon->sel->isfloating) {
+void attachstack(Client *c) {
+  c->snext = c->mon->stack;
+  c->mon->stack = c;
+}
+void attachbelow(Client *c) {
+  // If there is nothing on the monitor or the selected client is floating,
+  // attach as normal
+  if (c->mon->sel == NULL || c->mon->sel == c || c->mon->sel->isfloating) {
     attach(c);
     return;
   }
 
-  Client *at;
-  for (at = c->mon->clients; at->next != c->mon->sel; at = at->next)
-    ;
-  c->next = at->next;
-  at->next = c;
-}
-
-void attachstack(Client *c) {
-  c->snext = c->mon->stack;
-  c->mon->stack = c;
+  // Set the new client's next property to the same as the currently selected
+  // clients next
+  c->next = c->mon->sel->next;
+  // Set the currently selected clients next property to the new client
+  c->mon->sel->next = c;
 }
 
 void buttonpress(XEvent *e) {
@@ -1053,7 +1053,7 @@ void manage(Window w, XWindowAttributes *wa) {
     c->isfloating = c->oldstate = trans != None || c->isfixed;
   if (c->isfloating)
     XRaiseWindow(dpy, c->win);
-  attachabove(c);
+  attachbelow(c);
   attachstack(c);
   XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32,
                   PropModeAppend, (unsigned char *)&(c->win), 1);
@@ -1220,7 +1220,7 @@ void propertynotify(XEvent *e) {
   }
 }
 
-void quit(const Arg *arg) { running = 0; }
+/* void quit(const Arg *arg) { running = 0; } */
 
 Monitor *recttomon(int x, int y, int w, int h) {
   Monitor *m, *r = selmon;
@@ -1382,7 +1382,7 @@ void sendmon(Client *c, Monitor *m) {
   detachstack(c);
   c->mon = m;
   c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
-  attachabove(c);
+  attachbelow(c);
   attachstack(c);
   focus(NULL);
   arrange(NULL);
@@ -1822,7 +1822,7 @@ int updategeom(void) {
           m->clients = c->next;
           detachstack(c);
           c->mon = mons;
-          attachabove(c);
+          attachbelow(c);
           attachstack(c);
         }
         if (m == selmon)
@@ -1907,7 +1907,7 @@ void updatesizehints(Client *c) {
 
 void updatestatus(void) {
   if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
-    strcpy(stext, "dwm-" VERSION);
+    strcpy(stext, "");
   drawbar(selmon);
 }
 
