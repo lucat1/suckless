@@ -1,4 +1,10 @@
 dwm/dwm
 dwmstatus/dwmstatus
 st/st
+herbe/herbe
+dmenu/dmenu_path
+dmenu/dmenu_run
+dmenu/dmenu
+dmenu/stest
 **/*.o
+*/config.h

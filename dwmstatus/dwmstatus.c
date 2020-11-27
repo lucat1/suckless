@@ -17,8 +17,6 @@
 
 #include <X11/Xlib.h>
 
-char *tzrome = "Europe/Rome";
-
 static Display *dpy;
 
 char *smprintf(char *fmt, ...) {
@@ -43,14 +41,11 @@ char *smprintf(char *fmt, ...) {
   return ret;
 }
 
-void settz(char *tzname) { setenv("TZ", tzname, 1); }
-
-char *mktimes(char *fmt, char *tzname) {
+char *mktimes(char *fmt) {
   char buf[129];
   time_t tim;
   struct tm *timtm;
 
-  settz(tzname);
   tim = time(NULL);
   timtm = localtime(&tim);
   if (timtm == NULL)
@@ -67,15 +62,6 @@ char *mktimes(char *fmt, char *tzname) {
 void setstatus(char *str) {
   XStoreName(dpy, DefaultRootWindow(dpy), str);
   XSync(dpy, False);
-}
-
-char *loadavg(void) {
-  double avgs[3];
-
-  if (getloadavg(avgs, 1) < 0)
-    return smprintf("");
-
-  return smprintf("%.2f ", avgs[0]);
 }
 
 char *readfile(char *base, char *file) {
@@ -104,10 +90,11 @@ char *readfile(char *base, char *file) {
 
 char *getbattery(char *base) {
   char *co;
-  int descap, remcap;
+  int descap, remcap, cap;
 
   descap = -1;
   remcap = -1;
+  cap = -1;
 
   co = readfile(base, "present");
   if (co[0] != '1') {
@@ -124,26 +111,20 @@ char *getbattery(char *base) {
   sscanf(co, "%d", &remcap);
   free(co);
 
+  co = readfile(base, "capacity");
+  sscanf(co, "%d", &cap);
+  free(co);
+
   if (remcap < 0 || descap < 0)
     return smprintf("invalid");
 
-  return smprintf("%.0f", ((float)remcap / (float)descap) * 100);
-}
-
-char *gettemperature(char *base, char *sensor) {
-  char *co;
-
-  co = readfile(base, sensor);
-  if (co == NULL)
-    return smprintf("");
-  return smprintf("%02.0f°C", atof(co) / 1000);
+  return smprintf("%d%% [%.0f%%]", cap, ((float)remcap / (float)descap) * 100);
 }
 
 int main(void) {
   char *status;
-  char *avgs;
   char *bat;
-  char *tmbln;
+  char *tz;
 
   if (!(dpy = XOpenDisplay(NULL))) {
     fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -151,16 +132,14 @@ int main(void) {
   }
 
   for (;; sleep(60)) {
-    avgs = loadavg();
-    bat = getbattery("/sys/class/power_supply/BAT1");
-    tmbln = mktimes("%d %b %H:%M", tzrome);
+    bat = getbattery("/sys/class/power_supply/BAT0");
+    tz = mktimes("%H:%M"); // %d of %b
 
-    status = smprintf("L:%s B:%s %s", avgs, bat, tmbln);
+    status = smprintf("%s    %s ", bat, tz);
     setstatus(status);
 
-    free(avgs);
     free(bat);
-    free(tmbln);
+    free(tz);
     free(status);
   }
 

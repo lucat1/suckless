@@ -1,4 +1,4 @@
-SUBFOLDERS = dwm dwmstatus st dmenu
+SUBFOLDERS = dwm dwmstatus st dmenu herbe
 
 all:
 	$(foreach FOLDER,$(SUBFOLDERS), \
