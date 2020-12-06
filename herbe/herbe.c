@@ -3,12 +3,13 @@
 #include <bits/getopt_core.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <semaphore.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -23,7 +24,6 @@ Display *display;
 Window window;
 int exit_code = EXIT_DISMISS;
 int keep = 0;
-char semaphore[SEMAPHORE_LEN] = "/herbe-";
 
 static void die(const char *format, ...) {
   va_list ap;
@@ -79,10 +79,20 @@ void expire(int sig) {
   XFlush(display);
 }
 
-void usage(char *argv[]) {
-  sem_unlink(semaphore);
-  die("Usage: [-d duration] [-n name] %s body", argv[0]);
+void read_y_offset(unsigned int **offset, int *id) {
+  int shm_id = shmget(8432, sizeof(unsigned int), IPC_CREAT | 0660);
+  if (shm_id == -1)
+    die("shmget failed");
+
+  *offset = (unsigned int *)shmat(shm_id, 0, 0);
+  if (*offset == (unsigned int *)-1)
+    die("shmat failed\n");
+  *id = shm_id;
 }
+
+void free_y_offset(int id) { shmctl(id, IPC_RMID, NULL); }
+
+void usage(char *argv[]) { die("Usage: [-d duration] %s body", argv[0]); }
 
 int main(int argc, char *argv[]) {
   if (argc == 1) {
@@ -90,13 +100,10 @@ int main(int argc, char *argv[]) {
   }
 
   int opt;
-  while ((opt = getopt(argc, argv, "d:n:")) != -1) {
+  while ((opt = getopt(argc, argv, "d:")) != -1) {
     switch (opt) {
     case 'd':
       sscanf(optarg, "%u", &duration);
-      break;
-    case 'n':
-      strncat(semaphore, optarg, SEMAPHORE_LEN - (int)strlen(semaphore));
       break;
     default:
       usage(argv);
@@ -169,17 +176,21 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  unsigned int x = pos_x;
-  unsigned int y = pos_y;
+  int y_offset_id;
+  unsigned int *y_offset;
+  read_y_offset(&y_offset, &y_offset_id);
   unsigned int text_height = font->ascent - font->descent;
   unsigned int height = (num_of_lines - 1) * line_spacing +
                         num_of_lines * text_height + 2 * padding;
+  unsigned int x = pos_x;
+  unsigned int y = pos_y + *y_offset;
+  unsigned int used_y_offset = (*y_offset) += height + padding;
 
   if (corner == TOP_RIGHT || corner == BOTTOM_RIGHT)
-    x = screen_width - width - border_size * 2 - pos_x;
+    x = screen_width - width - border_size * 2 - x;
 
   if (corner == BOTTOM_LEFT || corner == BOTTOM_RIGHT)
-    y = screen_height - height - border_size * 2 - pos_y;
+    y = screen_height - height - border_size * 2 - y;
 
   window = XCreateWindow(
       display, RootWindow(display, screen), x, y, width, height, border_size,
@@ -191,9 +202,6 @@ int main(int argc, char *argv[]) {
 
   XSelectInput(display, window, ExposureMask | ButtonPress);
   XMapWindow(display, window);
-
-  sem_t *mutex = sem_open(semaphore, O_CREAT, 0644, 1);
-  sem_wait(mutex);
 
   sigaction(SIGUSR1, &act_expire, 0);
   sigaction(SIGUSR2, &act_expire, 0);
@@ -221,12 +229,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  sem_post(mutex);
-  sem_close(mutex);
-
   for (int i = 0; i < num_of_lines; i++)
     free(lines[i]);
 
+  if (used_y_offset == *y_offset)
+    free_y_offset(y_offset_id);
   free(lines);
   XftDrawDestroy(draw);
   XftColorFree(display, visual, colormap, &color);
