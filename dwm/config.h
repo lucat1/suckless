@@ -65,6 +65,9 @@ static const char *voldown[] = {"amixer", "set", "Master", "5-", NULL};
 static const char *lightup[] = {"xbacklight", "-inc", "10", NULL};
 static const char *lightdown[] = {"xbacklight", "-dec", "10", NULL};
 
+static const char *scr[] = {"scr", NULL};
+static const char *rbg[] = {"rbg", NULL};
+
 static Key keys[] = {
     /* modifier                     key        function        argument */
     {MODKEY, XK_space, spawn, {.v = dmenucmd}},
@@ -95,7 +98,6 @@ static Key keys[] = {
     TAGKEYS(XK_3, 2),
     TAGKEYS(XK_4, 3),
     TAGKEYS(XK_5, 4),
-    /* {MODKEY | ShiftMask, XK_q, quit, {0}}, */
 
     {0, XF86XK_AudioMute, spawn, {.v = volmute}},
     {0, XF86XK_AudioMicMute, spawn, {.v = micmute}},
@@ -104,6 +106,9 @@ static Key keys[] = {
 
     {0, XF86XK_MonBrightnessUp, spawn, {.v = lightup}},
     {0, XF86XK_MonBrightnessDown, spawn, {.v = lightdown}},
+
+    {MODKEY | ControlMask, XK_1, spawn, {.v = scr}},
+    {MODKEY | ShiftMask, XK_q, spawn, {.v = rbg}},
 };
 
 /* button definitions */
