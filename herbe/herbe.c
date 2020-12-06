@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ipc.h>
+#include <sys/prctl.h>
 #include <sys/shm.h>
 #include <unistd.h>
 
@@ -24,6 +25,7 @@ Display *display;
 Window window;
 int exit_code = EXIT_DISMISS;
 int keep = 0;
+char name[256] = "herbe-";
 
 static void die(const char *format, ...) {
   va_list ap;
@@ -92,7 +94,9 @@ void read_y_offset(unsigned int **offset, int *id) {
 
 void free_y_offset(int id) { shmctl(id, IPC_RMID, NULL); }
 
-void usage(char *argv[]) { die("Usage: [-d duration] %s body", argv[0]); }
+void usage(char *argv[]) {
+  die("Usage: [-d duration] [-n name]%s body", argv[0]);
+}
 
 int main(int argc, char *argv[]) {
   if (argc == 1) {
@@ -100,14 +104,21 @@ int main(int argc, char *argv[]) {
   }
 
   int opt;
-  while ((opt = getopt(argc, argv, "d:")) != -1) {
+  while ((opt = getopt(argc, argv, "n:d:")) != -1) {
     switch (opt) {
     case 'd':
       sscanf(optarg, "%u", &duration);
       break;
+    case 'n':
+      strcat(name, optarg);
+      break;
     default:
       usage(argv);
     }
+  }
+
+  if (strcmp(name, "herbe-") != 0 && strlen(name) < 16) {
+    prctl(PR_SET_NAME, name);
   }
 
   if (optind >= argc)
