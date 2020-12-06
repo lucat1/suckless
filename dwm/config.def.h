@@ -45,11 +45,13 @@ static const Layout layouts[] = {
 /* key definitions */
 #define MODKEY Mod4Mask
 #define TAGKEYS(KEY, TAG)                                                      \
-  {MODKEY, KEY, view, {.ui = 1 << TAG}},                                       \
-      {MODKEY | ControlMask, KEY, toggleview, {.ui = 1 << TAG}},               \
-      {MODKEY | ShiftMask, KEY, tag, {.ui = 1 << TAG}}, {                      \
-    MODKEY | ControlMask | ShiftMask, KEY, toggletag, { .ui = 1 << TAG }       \
+  {MODKEY, KEY, view, {.ui = 1 << TAG}}, {                                     \
+    MODKEY | ShiftMask, KEY, tag, { .ui = 1 << TAG }                           \
   }
+
+/* {MODKEY | ControlMask, KEY, toggleview, {.ui = 1 << TAG}},
+ * {MODKEY | ControlMask | ShiftMask, KEY, toggletag, { .ui = 1 << TAG }}
+ */
 
 /* commands */
 static char dmenumon[2] =
@@ -65,8 +67,8 @@ static const char *voldown[] = {"amixer", "set", "Master", "5-", NULL};
 static const char *lightup[] = {"xbacklight", "-inc", "10", NULL};
 static const char *lightdown[] = {"xbacklight", "-dec", "10", NULL};
 
-static const char *scr[] = {"scr", NULL};
-static const char *rbg[] = {"rbg", NULL};
+static const char *scr[] = {"sh", "/home/luca/.bin/scr", NULL};
+static const char *rbg[] = {"sh", "/home/luca/.bin/rbg", NULL};
 
 static Key keys[] = {
     /* modifier                     key        function        argument */
@@ -99,6 +101,9 @@ static Key keys[] = {
     TAGKEYS(XK_4, 3),
     TAGKEYS(XK_5, 4),
 
+    {MODKEY | ControlMask, XK_1, spawn, {.v = scr}},
+    {MODKEY | ShiftMask, XK_q, spawn, {.v = rbg}},
+
     {0, XF86XK_AudioMute, spawn, {.v = volmute}},
     {0, XF86XK_AudioMicMute, spawn, {.v = micmute}},
     {0, XF86XK_AudioRaiseVolume, spawn, {.v = volup}},
@@ -106,9 +111,6 @@ static Key keys[] = {
 
     {0, XF86XK_MonBrightnessUp, spawn, {.v = lightup}},
     {0, XF86XK_MonBrightnessDown, spawn, {.v = lightdown}},
-
-    {MODKEY | ControlMask, XK_1, spawn, {.v = scr}},
-    {MODKEY | ShiftMask, XK_q, spawn, {.v = rbg}},
 };
 
 /* button definitions */
