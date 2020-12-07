@@ -60,12 +60,17 @@ static const char *dmenucmd[] = {
     "dmenu_run", "-m",       dmenumon, "-fn", toolfont, "-nb", background,
     "-nf",       foreground, "-sb",    cyan,  "-sf",    gray,  NULL};
 static const char *termcmd[] = {"st", NULL};
-static const char *volmute[] = {"amixer", "set", "Master", "toggle", NULL};
+static const char *volmute[] = {
+    "sh", "/home/luca/.bin/media", "vol", "set", "Master", "toggle", NULL};
 static const char *micmute[] = {"amixer", "set", "Capture", "toggle", NULL};
-static const char *volup[] = {"amixer", "set", "Master", "5+", NULL};
-static const char *voldown[] = {"amixer", "set", "Master", "5-", NULL};
-static const char *lightup[] = {"xbacklight", "-inc", "10", NULL};
-static const char *lightdown[] = {"xbacklight", "-dec", "10", NULL};
+static const char *volup[] = {
+    "sh", "/home/luca/.bin/media", "vol", "set", "Master", "5+", NULL};
+static const char *voldown[] = {
+    "sh", "/home/luca/.bin/media", "vol", "set", "Master", "5-", NULL};
+static const char *lightup[] = {
+    "sh", "/home/luca/.bin/media", "scr", "-inc", "10", NULL};
+static const char *lightdown[] = {
+    "sh", "/home/luca/.bin/media", "scr", "-dec", "10", NULL};
 
 static const char *scr[] = {"sh", "/home/luca/.bin/scr", NULL};
 static const char *rbg[] = {"sh", "/home/luca/.bin/rbg", NULL};
