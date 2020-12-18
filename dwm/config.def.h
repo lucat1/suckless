@@ -59,7 +59,7 @@ static char dmenumon[2] =
 static const char *dmenucmd[] = {
     "dmenu_run", "-m",       dmenumon, "-fn", toolfont, "-nb", background,
     "-nf",       foreground, "-sb",    cyan,  "-sf",    gray,  NULL};
-static const char *termcmd[] = {"st", NULL};
+static const char *termcmd[] = {"alacritty", NULL};
 static const char *volmute[] = {
     "sh", "/home/luca/.bin/media", "vol", "set", "Master", "toggle", NULL};
 static const char *micmute[] = {"amixer", "set", "Capture", "toggle", NULL};
