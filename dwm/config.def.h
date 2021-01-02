@@ -1,6 +1,8 @@
 /* See LICENSE file for copyright and license details. */
 
 #include "../config.h"
+#include "dwm.h"
+#include "stdlib.h"
 #include <X11/XF86keysym.h>
 
 /* appearance */

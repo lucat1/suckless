@@ -2,7 +2,7 @@
 exe=$(dmenu_path | dmenu "$@")
 
 if [ $exe = "chromium" ]; then
-  exec chromium --enable-features=WebUIDarkMode --force-dark-mode
+  exec chromium --enable-features=WebUIDarkMode --force-dark-mode &
 else
   echo $exe | /bin/sh &
 fi
